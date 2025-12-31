@@ -427,8 +427,15 @@ class StatePoint:
                     if group.attrs.get("internal"):
                         continue
 
-                    # Create Tally object and assign basic properties
-                    tally = openmc.Tally(tally_id)
+                    # Check if this is a sensitivity tally and create appropriate object
+                    if 'sensitivity' in group:
+                        from openmc.tallies import SensitivityTally
+                        tally = SensitivityTally(tally_id)
+                        sens_id = group['sensitivity'][()]
+                        tally.sensitivity = self.tally_sensitivities[sens_id]
+                    else:
+                        tally = openmc.Tally(tally_id)
+
                     tally._sp_filename = Path(self._f.filename)
                     tally.name = group['name'][()].decode() if 'name' in group else ''
 
@@ -450,11 +457,6 @@ class StatePoint:
                     if 'derivative' in group:
                         deriv_id = group['derivative'][()]
                         tally.derivative = self.tally_derivatives[deriv_id]
-
-                    # Read sensitivity information.
-                    if 'sensitivity' in group:
-                        sens_id = group['sensitivity'][()]
-                        tally.sensitivity = self.tally_sensitivities[sens_id]
                     
                     # Read all filters
                     n_filters = group['n_filters'][()]
@@ -524,7 +526,7 @@ class StatePoint:
                 # Read the sensitivity ids.
                 base = 'tallies/sensitivities'
                 sens_ids = [int(k.split(' ')[1]) for k in self._f[base]]
-    
+
                 # Create each sensitivity object and add it to the dictionary.
                 for d_id in sens_ids:
                     group = self._f[f'tallies/sensitivities/sensitivity {d_id}']
@@ -533,14 +535,16 @@ class StatePoint:
                     if sens.variable == 'cross_section':
                         sens.nuclide = group['nuclide'][()].decode()
                         sens.reaction = group['reaction'][()].decode()
-                    elif sens.variable == 'multipole':                        
+                        if 'energy' in group:
+                            sens.energy = group['energy'][()]
+                    elif sens.variable == 'multipole':
                         sens.nuclide = group['nuclide'][()].decode()
                     elif sens.variable == 'curve_fit':
                         sens.nuclide = group['nuclide'][()].decode()
                     self._senss[d_id] = sens
-    
+
             self._senss_read = True
-    
+
         return self._senss
     
     @property

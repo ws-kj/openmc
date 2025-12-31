@@ -112,7 +112,7 @@ public:
   //----------------------------------------------------------------------------
   // Other methods.
 
-  virtual void add_filter(Filter* filter) { set_filters({&filter, 1}); }
+  virtual void add_filter(Filter* filter); //{ set_filters({&filter, 1}); }
 
   void init_triggers(pugi::xml_node node);
 
@@ -174,7 +174,9 @@ public:
   // present.
   int energyout_filter_ {C_NONE};
   int delayedgroup_filter_ {C_NONE};
-
+  int cell_filter_ {C_NONE};
+  int energy_filter_ {C_NONE};
+   
   vector<Trigger> triggers_;
 
   int deriv_ {C_NONE}; //!< Index of a TallyDerivative object for diff tallies.
