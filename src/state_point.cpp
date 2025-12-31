@@ -163,6 +163,7 @@ extern "C" int openmc_statepoint_write(const char* filename, bool* write_source)
             data::nuclides[sens.sens_nuclide]->name_);
           write_dataset(sens_group, "reaction",
             reaction_name(sens.sens_reaction));
+          write_dataset(sens_group, "energy", sens.energy_bins_);
         } else if (sens.variable == SensitivityVariable::MULTIPOLE) {
           write_dataset(sens_group, "independent variable", "multipole");
           write_dataset(sens_group, "nuclide",
@@ -604,14 +605,18 @@ hid_t h5banktype(bool memory)
   // - docs/source/io_formats/source.rst
   auto n = sizeof(SourceSite);
   if (!memory)
-    n = 2 * sizeof(struct Position) + 3 * sizeof(double) + 3 * sizeof(int);
+    // Size: 2 Positions (r, u) + 4 doubles (E, E_parent, time, wgt) + 4 ints
+    n = 2 * sizeof(struct Position) + 4 * sizeof(double) + 4 * sizeof(int);
   hid_t banktype = H5Tcreate(H5T_COMPOUND, n);
   H5Tinsert(banktype, "r", HOFFSET(SourceSite, r), postype);
   H5Tinsert(banktype, "u", HOFFSET(SourceSite, u), postype);
   H5Tinsert(banktype, "E", HOFFSET(SourceSite, E), H5T_NATIVE_DOUBLE);
+  H5Tinsert(banktype, "E_parent", HOFFSET(SourceSite, E_parent), H5T_NATIVE_DOUBLE);
   H5Tinsert(banktype, "time", HOFFSET(SourceSite, time), H5T_NATIVE_DOUBLE);
   H5Tinsert(banktype, "wgt", HOFFSET(SourceSite, wgt), H5T_NATIVE_DOUBLE);
   H5Tinsert(banktype, "delayed_group", HOFFSET(SourceSite, delayed_group),
+    H5T_NATIVE_INT);
+  H5Tinsert(banktype, "fission_nuclide", HOFFSET(SourceSite, fission_nuclide),
     H5T_NATIVE_INT);
   H5Tinsert(banktype, "surf_id", HOFFSET(SourceSite, surf_id), H5T_NATIVE_INT);
   H5Tinsert(

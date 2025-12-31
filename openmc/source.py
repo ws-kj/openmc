@@ -984,12 +984,16 @@ class SourceParticle:
         Directional cosines
     E : float
         Energy of particle in [eV]
+    E_parent : float
+        Energy of parent particle in [eV] (for sensitivity analysis)
     time : float
         Time of particle in [s]
     wgt : float
         Weight of the particle
     delayed_group : int
         Delayed group particle was created in (neutrons only)
+    fission_nuclide : int
+        Nuclide index that caused fission (for sensitivity analysis)
     surf_id : int
         Surface ID where particle is at, if any.
     particle : ParticleType
@@ -1002,9 +1006,11 @@ class SourceParticle:
         r: Iterable[float] = (0., 0., 0.),
         u: Iterable[float] = (0., 0., 1.),
         E: float = 1.0e6,
+        E_parent: float = 0.0,
         time: float = 0.0,
         wgt: float = 1.0,
         delayed_group: int = 0,
+        fission_nuclide: int = 0,
         surf_id: int = 0,
         particle: ParticleType = ParticleType.NEUTRON
     ):
@@ -1012,9 +1018,11 @@ class SourceParticle:
         self.r = tuple(r)
         self.u = tuple(u)
         self.E = float(E)
+        self.E_parent = float(E_parent)
         self.time = float(time)
         self.wgt = float(wgt)
         self.delayed_group = delayed_group
+        self.fission_nuclide = fission_nuclide
         self.surf_id = surf_id
         self.particle = particle
 
@@ -1031,8 +1039,8 @@ class SourceParticle:
             Source particle attributes
 
         """
-        return (self.r, self.u, self.E, self.time, self.wgt,
-                self.delayed_group, self.surf_id, self.particle.value)
+        return (self.r, self.u, self.E, self.E_parent, self.time, self.wgt,
+                self.delayed_group, self.fission_nuclide, self.surf_id, self.particle.value)
 
 
 def write_source_file(
@@ -1212,9 +1220,11 @@ class ParticleList(list):
             ('r', pos_dtype),
             ('u', pos_dtype),
             ('E', '<f8'),
+            ('E_parent', '<f8'),
             ('time', '<f8'),
             ('wgt', '<f8'),
             ('delayed_group', '<i4'),
+            ('fission_nuclide', '<i4'),
             ('surf_id', '<i4'),
             ('particle', '<i4'),
         ])
