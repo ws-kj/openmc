@@ -422,13 +422,24 @@ read_tally_sensitivities(pugi::xml_node node)
 double get_nuclide_xs_sens(const Particle& p, int i_nuclide, int score_bin)
 {
   const auto& nuc {*data::nuclides[i_nuclide]};
+  const auto& micro {p.neutron_xs(i_nuclide)};
+
+  // Handle "score" reactions that are not MT numbers to avoid invalid indexing.
+  if (score_bin == SCORE_NU_FISSION) {
+    return micro.nu_fission;
+  } else if (score_bin == SCORE_PROMPT_NU_FISSION) {
+    return micro.fission *
+      nuc.nu(p.E(), ReactionProduct::EmissionMode::prompt);
+  } else if (score_bin == SCORE_DELAYED_NU_FISSION) {
+    return micro.fission *
+      nuc.nu(p.E(), ReactionProduct::EmissionMode::delayed);
+  }
 
   // Get reaction object, or return 0 if reaction is not present
   auto m = nuc.reaction_index_[score_bin];
   if (m == C_NONE)
     return 0.0;
   const auto& rx {*nuc.reactions_[m]};
-  const auto& micro {p.neutron_xs(i_nuclide)};
 
   // In the URR, the (n,gamma) cross section is sampled randomly from
   // probability tables. Make sure we use the sampled value (which is equal to
